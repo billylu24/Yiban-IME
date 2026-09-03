@@ -1,0 +1,143 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0d2ccc9..f366f13 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -16,6 +16,7 @@ find_package(Fcitx5Core ${REQUIRED_FCITX_VERSION} REQUIRED)
+ find_package(Fcitx5Module REQUIRED COMPONENTS Notifications)
+ find_package(PkgConfig REQUIRED)
+ find_package(Pthread REQUIRED)
++find_package(BilingualImeDictionary 0.1 CONFIG QUIET)
+ 
+ if (NOT DEFINED RIME_TARGET)
+     pkg_check_modules(Rime REQUIRED IMPORTED_TARGET "rime>=1.9.0")
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0204584..3860b4d 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -25,6 +25,13 @@ endif()
+ 
+ add_fcitx5_addon(rime ${RIME_SOURCES})
+ target_link_libraries(rime ${RIME_LINK_LIBRARIES})
++if(BilingualImeDictionary_FOUND)
++    target_link_libraries(rime BilingualIme::Dictionary)
++    target_compile_definitions(rime PRIVATE
++        FCITX_RIME_BILINGUAL_HINTS
++        BILINGUAL_IME_DEFAULT_DICTIONARY="${BILINGUAL_IME_DEFAULT_DICTIONARY}"
++    )
++endif()
+ install(TARGETS rime DESTINATION "${CMAKE_INSTALL_LIBDIR}/fcitx5")
+ fcitx5_translate_desktop_file(rime.conf.in rime.conf)
+ configure_file(rime-addon.conf.in.in rime-addon.conf.in)
+diff --git a/src/rimecandidate.cpp b/src/rimecandidate.cpp
+index 7adc097..40434e5 100644
+--- a/src/rimecandidate.cpp
++++ b/src/rimecandidate.cpp
+@@ -19,8 +19,11 @@ RimeCandidateWord::RimeCandidateWord(RimeEngine *engine,
+                                      const RimeCandidate &candidate, int idx)
+     : engine_(engine), idx_(idx) {
+     setText(Text{candidate.text});
+-    if (candidate.comment && candidate.comment[0]) {
+-        setComment(Text{candidate.comment});
++    const auto comment = engine_->decorateCandidateComment(
++        candidate.text ? candidate.text : "",
++        candidate.comment ? candidate.comment : "");
++    if (!comment.empty()) {
++        setComment(Text{comment});
+     }
+ }
+ 
+@@ -41,8 +44,11 @@ RimeGlobalCandidateWord::RimeGlobalCandidateWord(RimeEngine *engine,
+                                                  int idx)
+     : engine_(engine), idx_(idx) {
+     setText(Text{candidate.text});
+-    if (candidate.comment && candidate.comment[0]) {
+-        setComment(Text{candidate.comment});
++    const auto comment = engine_->decorateCandidateComment(
++        candidate.text ? candidate.text : "",
++        candidate.comment ? candidate.comment : "");
++    if (!comment.empty()) {
++        setComment(Text{comment});
+     }
+ }
+ 
+diff --git a/src/rimeengine.cpp b/src/rimeengine.cpp
+index 159302a..a631e56 100644
+--- a/src/rimeengine.cpp
++++ b/src/rimeengine.cpp
+@@ -184,6 +184,20 @@ RimeEngine::RimeEngine(Instance *instance)
+     : instance_(instance), api_(EnsureRimeApi()),
+       factory_([this](InputContext &ic) { return new RimeState(this, ic); }),
+       sessionPool_(this, getSharedStatePolicy()) {
++#ifdef FCITX_RIME_BILINGUAL_HINTS
++    try {
++        bilingualDictionary_ =
++            std::make_unique<bilingual::BilingualDictionary>(
++                bilingual::BilingualDictionary::loadTsv(
++                    BILINGUAL_IME_DEFAULT_DICTIONARY));
++        RIME_DEBUG() << "Loaded " << bilingualDictionary_->size()
++                     << " bilingual word hints";
++    } catch (const std::exception &error) {
++        // Word hints are optional. A missing or malformed dictionary must not
++        // prevent Rime from starting.
++        RIME_ERROR() << "Bilingual word hints disabled: " << error.what();
++    }
++#endif
+     if constexpr (isAndroid() || isApple()) {
+         const auto &sp = StandardPaths::global();
+         std::string defaultYaml =
+@@ -275,6 +289,20 @@ RimeEngine::RimeEngine(Instance *instance)
+             });
+ }
+ 
++std::string
++RimeEngine::decorateCandidateComment(std::string_view candidate,
++                                     std::string_view existing) const {
++#ifdef FCITX_RIME_BILINGUAL_HINTS
++    if (bilingualDictionary_) {
++        if (const auto *translation = bilingualDictionary_->lookup(candidate)) {
++            return bilingual::mergeCandidateComment(
++                existing, bilingual::formatWordHint(*translation));
++        }
++    }
++#endif
++    return std::string(existing);
++}
++
+ RimeEngine::~RimeEngine() {
+     factory_.unregister();
+     try {
+diff --git a/src/rimeengine.h b/src/rimeengine.h
+index 459e727..0510fa3 100644
+--- a/src/rimeengine.h
++++ b/src/rimeengine.h
+@@ -45,6 +45,10 @@
+ #include <unordered_map>
+ #include <unordered_set>
+ 
++#ifdef FCITX_RIME_BILINGUAL_HINTS
++#include <dictionary/bilingual_dictionary.h>
++#endif
++
+ #ifndef FCITX_RIME_NO_DBUS
+ #include "rimeservice.h"
+ #endif
+@@ -170,6 +174,9 @@ public:
+ 
+     bool isCapsLockOn(InputContext *ic) const;
+ 
++    std::string decorateCandidateComment(std::string_view candidate,
++                                         std::string_view existing) const;
++
+ private:
+     static void rimeNotificationHandler(void *context, RimeSessionId session,
+                                         const char *messageTypee,
+@@ -210,6 +217,9 @@ private:
+     SimpleAction syncAction_;
+ 
+     RimeEngineConfig config_;
++#ifdef FCITX_RIME_BILINGUAL_HINTS
++    std::unique_ptr<bilingual::BilingualDictionary> bilingualDictionary_;
++#endif
+     std::unordered_map<std::string, std::unordered_map<std::string, bool>>
+         appOptions_;
+ 

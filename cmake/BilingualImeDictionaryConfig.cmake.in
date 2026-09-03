@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/BilingualImeDictionaryTargets.cmake")
+
+set(BILINGUAL_IME_DEFAULT_DICTIONARY
+    "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_DATADIR@/bilingual-ime/dictionary/base.tsv")
