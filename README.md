@@ -1,17 +1,21 @@
 # Bilingual IME
 
-Linux/Fcitx5 双语中文输入法原型。中文候选由 fcitx5-rime/librime 提供；词级英文提示走本地内存词典；句级翻译将由独立、异步的 translator daemon 提供。
+Linux/Fcitx5 双语中文输入法原型。中文候选由 fcitx5-rime/librime 提供；词级英文提示走本地内存词典；句级翻译由独立、异步的 translator daemon 提供。
 
 当前完成范围：
 
 - 固定上游版本的源码调研与架构设计；
-- 本地只读中英词典核心、comment 合并逻辑、单测和微基准；
+- 基于 CC-CEDICT 的本地只读中英词典、候选逐条翻译、comment 合并逻辑、单测和微基准；
 - 可应用到 fcitx5-rime `3509646289ec88f5c6c3956b343c305275aa8d3b` 的最小候选 comment patch。
 - 项目内 `.local-env` 隔离构建：Fcitx5 5.1.22、librime 1.17.0、
   本词典库和打补丁后的 fcitx5-rime 5.1.14；
 - 运行级 smoke test：Rime addon、双语词典和 `pinyin_simp` schema 均可加载。
+- 按 InputContext 隔离的整句状态机、200ms 防抖、句末立即翻译和过期结果丢弃；
+- 独立 CTranslate2 translator daemon，使用本地 OPUS-MT 中英神经翻译模型；
+- 整句英文通过 `AuxDown` 显示，不改变候选词或中文提交内容。
 
-当前没有实现 context manager、IPC、daemon 或 NMT。
+候选词翻译已覆盖 CC-CEDICT 收录的简繁体词条；未收录的复合词会尝试按最长词条
+分段翻译。整句翻译不复用这些释义，而是由神经翻译模型生成自然英文。
 
 ## 构建词典核心
 
@@ -21,13 +25,36 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+## 整句翻译
+
+安装本地翻译运行时和约 83 MiB 的中英模型：
+
+```sh
+scripts/setup-translator.sh
+```
+
+使用本项目的 Fcitx prefix 构建并安装 addon：
+
+```sh
+cmake -S . -B .local-env/build/bilingual \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$PWD/.local-env/prefix" \
+  -DCMAKE_PREFIX_PATH="$PWD/.local-env/prefix;$PWD/.local-env/sysroot/usr"
+cmake --build .local-env/build/bilingual
+cmake --install .local-env/build/bilingual
+```
+
+主用户测试安装器会启用 `bilingual-ime-translator.service` 用户服务，Fcitx 启动器也会
+确认服务已启动。中文提交后停顿
+约 200ms，候选框下方会显示 `EN: ...`；输入 `。！？!?` 时立即请求最终整句翻译。
+
 构建微基准：
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
   -DBILINGUAL_BUILD_BENCHMARKS=ON
 cmake --build build
-./build/dictionary_benchmark data/dictionary/base.tsv
+./build/dictionary_benchmark build/dictionary/base.tsv
 ```
 
 ## fcitx5-rime 集成

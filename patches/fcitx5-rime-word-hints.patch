@@ -94,10 +94,8 @@ index 159302a..a631e56 100644
 +                                     std::string_view existing) const {
 +#ifdef FCITX_RIME_BILINGUAL_HINTS
 +    if (bilingualDictionary_) {
-+        if (const auto *translation = bilingualDictionary_->lookup(candidate)) {
-+            return bilingual::mergeCandidateComment(
-+                existing, bilingual::formatWordHint(*translation));
-+        }
++        return bilingual::mergeCandidateComment(
++            existing, bilingualDictionary_->translateCandidate(candidate));
 +    }
 +#endif
 +    return std::string(existing);

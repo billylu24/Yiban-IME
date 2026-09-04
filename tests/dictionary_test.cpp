@@ -36,17 +36,25 @@ void expectThrows(Function function, const char *message) {
 
 } // namespace
 
-int main() {
+int main(int argc, char **argv) {
   const auto validPath = writeFixture(
       "bilingual-ime-dictionary-valid.tsv",
-      "# fixture\n你好\thello\thi|greetings\n方法\tmethod\tway|approach\r\n");
+      "# fixture\n你好\thello\thi|greetings\n你\tyou\t\n好\tgood\tfine\n"
+      "你方\twrong dead end\t\n"
+      "方法\tmethod\tway|approach\r\n");
   const auto dictionary =
       bilingual::BilingualDictionary::loadTsv(validPath.string());
-  expect(dictionary.size() == 2, "loads comments, LF, and CRLF");
+  expect(dictionary.size() == 5, "loads comments, LF, and CRLF");
   const auto *hello = dictionary.lookup("你好");
   expect(hello && hello->primary == "hello", "looks up primary meaning");
   expect(hello && hello->alternatives.size() == 2, "loads alternatives");
   expect(dictionary.lookup("不存在") == nullptr, "reports a miss");
+  expect(dictionary.translateCandidate("你好") == "hello / hi",
+         "translates an exact candidate");
+  expect(dictionary.translateCandidate("你方法") == "you / method",
+         "backtracks when the longest segmentation cannot complete");
+  expect(dictionary.translateCandidate("你不存在").empty(),
+         "does not emit a partial translation when segmentation fails");
 
   expect(bilingual::formatWordHint(*hello) == "hello / hi",
          "formats primary and one alternative");
@@ -90,6 +98,19 @@ int main() {
   expectThrows(
       [] { bilingual::BilingualDictionary::loadTsv("/definitely/missing"); },
       "reports a missing data file");
+
+  if (argc == 2) {
+    const auto fullDictionary =
+        bilingual::BilingualDictionary::loadTsv(argv[1]);
+    expect(fullDictionary.size() > 100000,
+           "generated candidate dictionary has broad coverage");
+    expect(fullDictionary.translateCandidate("你好") == "hello; hi",
+           "full dictionary translates 你好");
+    expect(fullDictionary.translateCandidate("你") == "you",
+           "full dictionary translates 你 compactly");
+    expect(fullDictionary.translateCandidate("拟") == "to plan to / to draft",
+           "full dictionary prioritizes the canonical meaning of 拟");
+  }
 
   std::filesystem::remove(validPath);
   std::filesystem::remove(duplicatePath);

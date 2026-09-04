@@ -173,6 +173,69 @@ BilingualDictionary::lookup(std::string_view chinese) const noexcept {
   return iter == entries_.end() ? nullptr : &iter->second;
 }
 
+std::string
+BilingualDictionary::translateCandidate(std::string_view chinese,
+                                        std::size_t maxBytes) const {
+  if (const auto *exact = lookup(chinese)) {
+    return formatWordHint(*exact, maxBytes);
+  }
+  if (chinese.empty() || maxBytes == 0 || !isValidUtf8(chinese)) {
+    return {};
+  }
+
+  std::vector<std::size_t> boundaries{0};
+  for (std::size_t offset = 1; offset < chinese.size(); ++offset) {
+    if ((static_cast<unsigned char>(chinese[offset]) & 0xC0U) != 0x80U) {
+      boundaries.push_back(offset);
+    }
+  }
+  boundaries.push_back(chinese.size());
+
+  struct Segment {
+    const WordTranslation *translation = nullptr;
+    std::size_t next = 0;
+  };
+  std::vector<Segment> segments(boundaries.size());
+  segments.back().next = boundaries.size();
+  for (std::size_t i = boundaries.size() - 1; i-- > 0;) {
+    for (std::size_t j = boundaries.size() - 1; j > i; --j) {
+      if (j != boundaries.size() - 1 && !segments[j].translation) {
+        continue;
+      }
+      if (const auto *entry = lookup(
+              chinese.substr(boundaries[i], boundaries[j] - boundaries[i]))) {
+        segments[i] = {entry, j};
+        break;
+      }
+    }
+  }
+  if (!segments.front().translation) {
+    return {};
+  }
+
+  std::string result;
+  for (std::size_t segment = 0; segment < boundaries.size() - 1;
+       segment = segments[segment].next) {
+    const auto *best = segments[segment].translation;
+    const auto remaining = maxBytes - result.size();
+    const auto hint = formatWordHint(*best, remaining, 0);
+    if (hint.empty()) {
+      return result;
+    }
+    if (!result.empty()) {
+      if (result.size() + 3 > maxBytes) {
+        return result;
+      }
+      result.append(" / ");
+    }
+    if (result.size() + hint.size() > maxBytes) {
+      return result;
+    }
+    result.append(hint);
+  }
+  return result;
+}
+
 std::string formatWordHint(const WordTranslation &translation,
                            std::size_t maxBytes, std::size_t maxAlternatives) {
   if (maxBytes == 0 || translation.primary.empty()) {

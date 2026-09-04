@@ -13,6 +13,9 @@ STATE_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/giaok-keyboard"
 ACTIVE_STATE="$STATE_ROOT/active-main-user-test"
 LAUNCHER_DIR="$HOME/.local/bin"
 LAUNCHER="$LAUNCHER_DIR/fcitx5-giaok-5.1.22"
+TRANSLATOR_LAUNCHER="$LAUNCHER_DIR/bilingual-ime-translator"
+SYSTEMD_USER_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+TRANSLATOR_SERVICE="$SYSTEMD_USER_DIR/bilingual-ime-translator.service"
 PROFILE="$CONFIG_DIR/profile"
 AUTOSTART="$AUTOSTART_DIR/org.fcitx.Fcitx5.desktop"
 RIME_USER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fcitx5/rime"
@@ -57,7 +60,8 @@ done < <(find "$ADDON_DIR" -maxdepth 1 -type l -name '*.so' -print)
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="$STATE_ROOT/backups/$timestamp"
-mkdir -p "$backup_dir" "$CONFIG_DIR" "$AUTOSTART_DIR" "$LAUNCHER_DIR"
+mkdir -p "$backup_dir" "$CONFIG_DIR" "$AUTOSTART_DIR" "$LAUNCHER_DIR" \
+    "$SYSTEMD_USER_DIR"
 
 if [[ -d "$RIME_USER_DIR" ]]; then
     cp -a "$RIME_USER_DIR" "$backup_dir/rime-user-dir"
@@ -88,6 +92,20 @@ else
     launcher_existed=0
 fi
 
+if [[ -e "$TRANSLATOR_LAUNCHER" ]]; then
+    cp -a "$TRANSLATOR_LAUNCHER" "$backup_dir/translator-launcher"
+    translator_launcher_existed=1
+else
+    translator_launcher_existed=0
+fi
+
+if [[ -e "$TRANSLATOR_SERVICE" ]]; then
+    cp -a "$TRANSLATOR_SERVICE" "$backup_dir/translator.service"
+    translator_service_existed=1
+else
+    translator_service_existed=0
+fi
+
 if [[ -e "$RIME_CUSTOM" ]]; then
     cp -a "$RIME_CUSTOM" "$backup_dir/default.custom.yaml"
     rime_custom_existed=1
@@ -96,6 +114,11 @@ else
 fi
 
 install -m 0755 "$SCRIPT_DIR/run-main-fcitx5-5.1.22.sh" "$LAUNCHER"
+install -m 0755 "$SCRIPT_DIR/run-translator-daemon.sh" "$TRANSLATOR_LAUNCHER"
+install -m 0644 "$PROJECT_ROOT/data/bilingual-ime-translator.service" \
+    "$TRANSLATOR_SERVICE"
+systemctl --user daemon-reload
+systemctl --user enable --now bilingual-ime-translator.service
 
 cat >"$AUTOSTART" <<EOF
 [Desktop Entry]
@@ -115,6 +138,8 @@ backup_dir=$backup_dir
 profile_existed=$profile_existed
 autostart_existed=$autostart_existed
 launcher_existed=$launcher_existed
+translator_launcher_existed=$translator_launcher_existed
+translator_service_existed=$translator_service_existed
 rime_custom_existed=$rime_custom_existed
 rime_dir_existed=$rime_dir_existed
 project_root=$PROJECT_ROOT

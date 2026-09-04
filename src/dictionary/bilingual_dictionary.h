@@ -41,6 +41,12 @@ public:
   static BilingualDictionary loadTsv(const std::string &path);
 
   const WordTranslation *lookup(std::string_view chinese) const noexcept;
+
+  // Translate a candidate as a whole when possible. If the exact phrase is
+  // absent, greedily segment it into the longest dictionary entries so that
+  // uncommon compounds can still receive a useful candidate hint.
+  std::string translateCandidate(std::string_view chinese,
+                                 std::size_t maxBytes = 48) const;
   std::size_t size() const noexcept { return entries_.size(); }
 
 private:

@@ -28,4 +28,6 @@ fi
 export LD_LIBRARY_PATH="$PREFIX/lib:$SYSROOT_LIB${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="$PREFIX/share:/usr/local/share:/usr/share"
 
-exec "$PREFIX/bin/fcitx5" --enable rime "$@"
+systemctl --user start bilingual-ime-translator.service >/dev/null 2>&1 || true
+
+exec "$PREFIX/bin/fcitx5" --enable rime,bilingualcontext "$@"

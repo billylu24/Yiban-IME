@@ -28,8 +28,8 @@ set +e
 timeout 12s "$BILINGUAL_IME_ENV/prefix/bin/fcitx5" \
     -D -k \
     --disable all \
-    --enable keyboard,rime \
-    --verbose 'default=4,rime=5' >"$LOG" 2>&1
+    --enable keyboard,rime,bilingualcontext \
+    --verbose 'default=4,rime=5,bilingualcontext=5' >"$LOG" 2>&1
 status=$?
 set -e
 
@@ -40,7 +40,8 @@ fi
 
 grep -Eq 'Starting fcitx5 5\.1\.22' "$LOG"
 grep -Eq 'Loaded [0-9]+ bilingual word hints' "$LOG"
-grep -Eq 'Loaded addon rime' "$LOG"
+grep -Eq '] Loaded addon rime$' "$LOG"
+grep -Eq '] Loaded addon bilingualcontext$' "$LOG"
 grep -Eq "dictionary 'pinyin_simp' is ready|schema: pinyin_simp|loading config file .*pinyin_simp\.schema\.yaml" "$LOG"
 
 if ldd "$MODULE" | grep -q 'not found'; then
