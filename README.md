@@ -61,6 +61,25 @@ smoke test 使用 `.local-env/xdg-*` 下的独立配置与用户数据，不会�
 场景下的进程启动、addon 加载、词典加载和 Rime schema 部署；候选框的视觉检查仍需
 在真实 Wayland/X11 会话中进行。
 
+## 临时切换主用户环境
+
+将当前桌面会话临时切换到项目内 Fcitx5 5.1.22 和双语 Rime：
+
+```sh
+scripts/install-main-user-test.sh
+```
+
+安装器会先备份当前 profile 和 autostart 文件，再把 `rime` 设为默认输入法；原来的
+`pinyin` 仍保留在输入法列表中。该测试不覆盖 `/usr`。恢复 Ubuntu 自带的 Fcitx5
+和原始配置：
+
+```sh
+scripts/restore-main-user-test.sh
+```
+
+备份保留在 `~/.local/state/giaok-keyboard/backups/`。回退时，本次测试产生的
+Rime 用户数据也会移入对应备份目录，不会直接删除。
+
 详见：
 
 - [源码调研](docs/research.md)

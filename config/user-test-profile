@@ -1,0 +1,28 @@
+[Groups/0]
+# Group Name
+Name=Default
+# Layout
+Default Layout=us
+# Default Input Method
+DefaultIM=rime
+
+[Groups/0/Items/0]
+# Name
+Name=keyboard-us
+# Layout
+Layout=
+
+[Groups/0/Items/1]
+# Keep the original Ubuntu Pinyin input method available for fallback.
+Name=pinyin
+# Layout
+Layout=
+
+[Groups/0/Items/2]
+# Patched bilingual Rime input method.
+Name=rime
+# Layout
+Layout=
+
+[GroupOrder]
+0=Default
