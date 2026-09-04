@@ -80,7 +80,8 @@ if(nlohmann_json_FOUND)
     )
 
     find_package(Fcitx5Core 5.1.22 QUIET)
-    if(Fcitx5Core_FOUND)
+    find_package(Fcitx5Config 5.1.22 QUIET)
+    if(Fcitx5Core_FOUND AND Fcitx5Config_FOUND)
         add_fcitx5_addon(bilingualcontext
             src/addon/bilingual_context.cpp
         )
@@ -90,6 +91,7 @@ if(nlohmann_json_FOUND)
         target_compile_features(bilingualcontext PRIVATE cxx_std_20)
         target_link_libraries(bilingualcontext PRIVATE
             Fcitx5::Core
+            Fcitx5::Config
             bilingual_sentence_state
             bilingual_translation
         )

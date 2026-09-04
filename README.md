@@ -10,7 +10,7 @@ Linux/Fcitx5 双语中文输入法原型。中文候选由 fcitx5-rime/librime �
 - 项目内 `.local-env` 隔离构建：Fcitx5 5.1.22、librime 1.17.0、
   本词典库和打补丁后的 fcitx5-rime 5.1.14；
 - 运行级 smoke test：Rime addon、双语词典和 `pinyin_simp` schema 均可加载。
-- 按 InputContext 隔离的整句状态机、200ms 防抖、句末立即翻译和过期结果丢弃；
+- 按 InputContext 隔离的整句状态机、200ms 防抖、可配置断句符和过期结果丢弃；
 - 独立 CTranslate2 translator daemon，使用本地 OPUS-MT 中英神经翻译模型；
 - 整句英文通过 `AuxDown` 显示，不改变候选词或中文提交内容。
 
@@ -45,8 +45,24 @@ cmake --install .local-env/build/bilingual
 ```
 
 主用户测试安装器会启用 `bilingual-ime-translator.service` 用户服务，Fcitx 启动器也会
-确认服务已启动。中文提交后停顿
-约 200ms，候选框下方会显示 `EN: ...`；输入 `。！？!?` 时立即请求最终整句翻译。
+确认服务已启动。中文提交后停顿约 200ms，候选框下方会显示 `EN: ...`；
+按空格或输入 `。！？.!?` 时立即请求最终整句翻译。Backspace、Delete 和导航键不会
+清空插件维护的句子缓冲。
+
+断句符可在 Fcitx 配置工具的 `Bilingual sentence translation` addon 页面修改，
+也可直接编辑 `~/.config/fcitx5/conf/bilingualcontext.conf`。每项只能放一个 UTF-8
+字符；空格使用可见的特殊值 `space`。默认配置等价于：
+
+```ini
+[SentenceBoundaries]
+0=space
+1=.
+2=!
+3=?
+4=。
+5=！
+6=？
+```
 
 构建微基准：
 
