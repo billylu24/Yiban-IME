@@ -13,15 +13,8 @@ Name=keyboard-us
 Layout=
 
 [Groups/0/Items/1]
-# Keep the original Ubuntu Pinyin input method available for fallback.
-Name=pinyin
-# Layout
-Layout=
-
-[Groups/0/Items/2]
-# Patched bilingual Rime input method.
+# Yiban Chinese input (Rime engine).
 Name=rime
-# Layout
 Layout=
 
 [GroupOrder]
