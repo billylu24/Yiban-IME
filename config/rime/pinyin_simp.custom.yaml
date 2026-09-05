@@ -1,0 +1,4 @@
+patch:
+  # Keep the compact pinyin_simp schema and its user database, but build its
+  # Chinese candidates from the actively maintained Rime Ice dictionary.
+  translator/dictionary: rime_ice

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Resolve symlinks before finding the install prefix; the source checkout is not used.
+launcher="$(readlink -f "${BASH_SOURCE[0]}")"
+prefix="$(cd "$(dirname "$launcher")/.." && pwd)"
+exec "${BILINGUAL_TRANSLATOR_PYTHON:-python3}" "$prefix/@CMAKE_INSTALL_DATADIR@/yiban-ime/translator/daemon.py" "$@"

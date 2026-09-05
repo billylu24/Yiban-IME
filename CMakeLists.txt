@@ -6,16 +6,16 @@ include(CTest)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
 find_package(Threads REQUIRED)
 
-find_package(nlohmann_json 3.11 QUIET)
-if(NOT nlohmann_json_FOUND AND
-   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.local-env/sysroot/usr/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake")
-    find_package(nlohmann_json 3.11 REQUIRED CONFIG
-        PATHS "${CMAKE_CURRENT_SOURCE_DIR}/.local-env/sysroot/usr/share/cmake/nlohmann_json"
-        NO_DEFAULT_PATH
-    )
+option(BILINGUAL_BUILD_ADDON "Build the Fcitx5 sentence translation addon" ON)
+if(BILINGUAL_BUILD_ADDON)
+    find_package(nlohmann_json 3.11 REQUIRED)
+    find_package(Fcitx5Core 5.1.22 REQUIRED)
+    find_package(Fcitx5Config 5.1.22 REQUIRED)
+else()
+    find_package(nlohmann_json 3.11 QUIET)
 endif()
 
 set(CEDICT_ARCHIVE "${CMAKE_CURRENT_SOURCE_DIR}/data/dictionary/cedict_ts.u8.gz")
@@ -79,9 +79,7 @@ if(nlohmann_json_FOUND)
         POSITION_INDEPENDENT_CODE ON
     )
 
-    find_package(Fcitx5Core 5.1.22 QUIET)
-    find_package(Fcitx5Config 5.1.22 QUIET)
-    if(Fcitx5Core_FOUND AND Fcitx5Config_FOUND)
+    if(BILINGUAL_BUILD_ADDON)
         add_fcitx5_addon(bilingualcontext
             src/addon/bilingual_context.cpp
         )
@@ -104,6 +102,25 @@ if(nlohmann_json_FOUND)
         )
     endif()
 endif()
+
+option(YIBAN_BRAND_RIME "Display the Rime input method as Yiban" ON)
+if(YIBAN_BRAND_RIME)
+    install(FILES data/yiban-inputmethod.conf
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/fcitx5/inputmethod" RENAME rime.conf)
+    install(DIRECTORY data/icons/hicolor
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons")
+endif()
+
+# Standalone service payload: no checkout, Conda, or bundled Fcitx is required.
+configure_file(scripts/yiban-translator.in yiban-translator @ONLY)
+install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/yiban-translator"
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES translator/daemon.py
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/yiban-ime/translator")
+install(FILES config/bilingualcontext.conf
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/yiban-ime/config")
+install(PROGRAMS scripts/install-translator-service.sh
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/yiban-ime/scripts")
 
 install(TARGETS bilingual_dictionary
     EXPORT BilingualImeDictionaryTargets
@@ -153,11 +170,19 @@ if(BUILD_TESTING)
     target_link_libraries(sentence_state_test PRIVATE bilingual_sentence_state)
     add_test(NAME sentence_state_test COMMAND sentence_state_test)
 
+    add_executable(cursor_sentence_test tests/cursor_sentence_test.cpp)
+    target_link_libraries(cursor_sentence_test PRIVATE bilingual_sentence_state)
+    add_test(NAME cursor_sentence_test COMMAND cursor_sentence_test)
+
     if(nlohmann_json_FOUND)
         add_executable(protocol_test tests/protocol_test.cpp)
         target_link_libraries(protocol_test PRIVATE bilingual_translation)
         add_test(NAME protocol_test COMMAND protocol_test)
     endif()
+
+    add_test(NAME config_test
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/config_test.py"
+    )
 
     add_test(NAME daemon_test
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/daemon_test.py"
@@ -169,3 +194,5 @@ if(BILINGUAL_BUILD_BENCHMARKS)
     add_executable(dictionary_benchmark benchmarks/dictionary_benchmark.cpp)
     target_link_libraries(dictionary_benchmark PRIVATE bilingual_dictionary)
 endif()
+
+message(STATUS "Yiban IME: sentence addon=${BILINGUAL_BUILD_ADDON}; prefix=${CMAKE_INSTALL_PREFIX}; libdir=${CMAKE_INSTALL_LIBDIR}")

@@ -11,6 +11,7 @@ LAUNCHER="$HOME/.local/bin/fcitx5-giaok-5.1.22"
 TRANSLATOR_LAUNCHER="$HOME/.local/bin/bilingual-ime-translator"
 TRANSLATOR_SERVICE="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/bilingual-ime-translator.service"
 PROFILE="$CONFIG_DIR/profile"
+BILINGUAL_CONFIG="$CONFIG_DIR/conf/bilingualcontext.conf"
 AUTOSTART="$AUTOSTART_DIR/org.fcitx.Fcitx5.desktop"
 RIME_USER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fcitx5/rime"
 TRANSLATOR_PID="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bilingual-ime/translator.pid"
@@ -24,6 +25,7 @@ fi
 # only absolute paths and 0/1 flags.
 backup_dir=""
 profile_existed=0
+bilingual_config_existed=0
 autostart_existed=0
 launcher_existed=0
 translator_launcher_existed=0
@@ -70,6 +72,12 @@ if [[ "$profile_existed" == 1 ]]; then
     install -m 0644 "$backup_dir/profile" "$PROFILE"
 else
     rm -f "$PROFILE"
+fi
+
+if [[ "${bilingual_config_existed:-0}" == 1 ]]; then
+    install -m 0644 "$backup_dir/bilingualcontext.conf" "$BILINGUAL_CONFIG"
+else
+    rm -f "$BILINGUAL_CONFIG"
 fi
 
 if [[ "$autostart_existed" == 1 ]]; then

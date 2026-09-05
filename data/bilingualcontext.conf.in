@@ -1,0 +1,14 @@
+[Addon]
+Name=Yiban sentence translation
+Name[zh_CN]=译伴整句翻译
+Comment=Show asynchronous English sentence translations below Rime candidates
+Comment[zh_CN]=在 Rime 候选框下方异步显示英文整句翻译
+Category=Module
+Version=@PROJECT_VERSION@
+Library=libbilingualcontext
+Type=SharedLibrary
+OnDemand=False
+Configurable=True
+
+[Addon/Dependencies]
+0=core:5.1.22

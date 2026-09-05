@@ -1,0 +1,41 @@
+diff --git a/src/rime.conf.in b/src/rime.conf.in
+--- a/src/rime.conf.in
++++ b/src/rime.conf.in
+@@ -1,6 +1,6 @@
+ [InputMethod]
+-Name=Rime
+-Icon=fcitx-rime
+-Label=ㄓ
++Name=Yiban
++Icon=fcitx-yiban
++Label=Y
+ LangCode=zh
+ Addon=rime
+diff --git a/src/rime-addon.conf.in.in b/src/rime-addon.conf.in.in
+--- a/src/rime-addon.conf.in.in
++++ b/src/rime-addon.conf.in.in
+@@ -1,5 +1,5 @@
+ [Addon]
+-Name=Rime
+-Comment=Rime Wrapper For Fcitx
++Name=Yiban
++Comment=Yiban bilingual input powered by Rime
+ Category=InputMethod
+ Version=@PROJECT_VERSION@
+diff --git a/src/rimeengine.cpp b/src/rimeengine.cpp
+--- a/src/rimeengine.cpp
++++ b/src/rimeengine.cpp
+@@ -658,5 +658,5 @@
+ std::string RimeEngine::subModeIconImpl(const InputMethodEntry & /*unused*/,
+                                         InputContext &ic) {
+-    std::string result = "fcitx-rime";
++    std::string result = "fcitx-yiban";
+     if (!factory_.registered()) {
+         return result;
+@@ -673,5 +673,5 @@
+                 }
+             } else {
+-                result = "fcitx-rime";
++                result = "fcitx-yiban";
+             }
+         });

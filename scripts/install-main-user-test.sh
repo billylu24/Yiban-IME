@@ -17,6 +17,7 @@ TRANSLATOR_LAUNCHER="$LAUNCHER_DIR/bilingual-ime-translator"
 SYSTEMD_USER_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 TRANSLATOR_SERVICE="$SYSTEMD_USER_DIR/bilingual-ime-translator.service"
 PROFILE="$CONFIG_DIR/profile"
+BILINGUAL_CONFIG="$CONFIG_DIR/conf/bilingualcontext.conf"
 AUTOSTART="$AUTOSTART_DIR/org.fcitx.Fcitx5.desktop"
 RIME_USER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fcitx5/rime"
 RIME_CUSTOM="$RIME_USER_DIR/default.custom.yaml"
@@ -60,7 +61,7 @@ done < <(find "$ADDON_DIR" -maxdepth 1 -type l -name '*.so' -print)
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="$STATE_ROOT/backups/$timestamp"
-mkdir -p "$backup_dir" "$CONFIG_DIR" "$AUTOSTART_DIR" "$LAUNCHER_DIR" \
+mkdir -p "$backup_dir" "$CONFIG_DIR/conf" "$AUTOSTART_DIR" "$LAUNCHER_DIR" \
     "$SYSTEMD_USER_DIR"
 
 if [[ -d "$RIME_USER_DIR" ]]; then
@@ -76,6 +77,13 @@ if [[ -e "$PROFILE" ]]; then
     profile_existed=1
 else
     profile_existed=0
+fi
+
+if [[ -e "$BILINGUAL_CONFIG" ]]; then
+    cp -a "$BILINGUAL_CONFIG" "$backup_dir/bilingualcontext.conf"
+    bilingual_config_existed=1
+else
+    bilingual_config_existed=0
 fi
 
 if [[ -e "$AUTOSTART" ]]; then
@@ -136,6 +144,7 @@ EOF
 cat >"$ACTIVE_STATE" <<EOF
 backup_dir=$backup_dir
 profile_existed=$profile_existed
+bilingual_config_existed=$bilingual_config_existed
 autostart_existed=$autostart_existed
 launcher_existed=$launcher_existed
 translator_launcher_existed=$translator_launcher_existed
@@ -160,7 +169,9 @@ fi
 # Write the new profile only after the old process has exited, otherwise its
 # shutdown autosave can restore the previous input-method list.
 install -m 0644 "$PROJECT_ROOT/config/user-test-profile" "$PROFILE"
+install -m 0644 "$PROJECT_ROOT/config/bilingualcontext.conf" "$BILINGUAL_CONFIG"
 install -m 0644 "$PROJECT_ROOT/config/smoke/default.custom.yaml" "$RIME_CUSTOM"
+"$SCRIPT_DIR/update-rime-ice-dictionary.sh" --skip-redeploy
 "$LAUNCHER" -d
 
 sleep 2

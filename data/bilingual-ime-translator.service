@@ -1,0 +1,11 @@
+[Unit]
+Description=Yiban IME sentence translation service
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/bilingual-ime-translator
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

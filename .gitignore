@@ -5,3 +5,9 @@
 /.idea/
 /installation.yaml
 /main.py
+
+__pycache__/
+*.py[cod]
+/test_out.txt
+
+/upstream/
