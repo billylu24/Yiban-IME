@@ -201,6 +201,19 @@ Rime 补丁在编译时确定词典路径。更换 prefix 后应重新配置、�
 
 默认 `YIBAN_BRAND_RIME=ON`，安装输入法描述文件和多尺寸 PNG 图标，显示名称为 Yiban。内部仍是 `rime`，无需迁移用户词库。
 
+**使用私有 prefix 时，需要额外安装桌面图标。** GNOME/KDE 面板不会继承
+Fcitx 启动器的 `XDG_DATA_DIRS`，所以即使 Fcitx 返回 `fcitx-yiban`，桌面也可能找不到图片：
+
+```sh
+scripts/install-user-icons.sh "$YIBAN_PREFIX"
+# 没有源码目录时：
+# "$YIBAN_PREFIX/share/yiban-ime/scripts/install-user-icons.sh" "$YIBAN_PREFIX"
+```
+
+脚本仅复制 Yiban 图标到 `${XDG_DATA_HOME:-~/.local/share}/icons/hicolor` 并刷新缓存。
+随后重启 Fcitx，使托盘重新加载。安装到桌面可见的 `/usr/share/icons` 时通常无需额外复制；
+更换 logo 或迁移机器后应再次执行。
+
 若只想使用翻译插件并保留原 Rime 外观，构建时传入 `-DYIBAN_BRAND_RIME=OFF`，并跳过 branding patch。恢复已有安装的原名称时，需要重新安装发行版的 Rime 输入法描述文件；仅关闭构建选项不会删除已经安装的文件。
 
 branding patch 同时更新引擎返回的中文模式图标；英文/禁用模式保留原有状态图标。托盘是否显示图片由桌面与主题决定，Fcitx Classic UI 可将 `PreferTextIcon=False` 以优先使用图标。

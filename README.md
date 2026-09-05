@@ -204,6 +204,22 @@ The word-hint patch embeds the dictionary path at build time. Reconfigure and re
 
 The branding patch also changes the engine's Chinese-mode icon. Existing Latin/disabled state icons remain available. Desktop panels control final icon rendering; Fcitx Classic UI can prefer images with `PreferTextIcon=False`.
 
+**Private-prefix installations need one additional desktop integration step.**
+The desktop shell does not inherit the Fcitx launcher's `XDG_DATA_DIRS`. Even when
+Fcitx reports `fcitx-yiban`, the panel cannot render it unless the desktop can find
+the image. Install the icons into the standard per-user icon directory:
+
+```sh
+scripts/install-user-icons.sh "$YIBAN_PREFIX"
+# Without a checkout:
+# "$YIBAN_PREFIX/share/yiban-ime/scripts/install-user-icons.sh" "$YIBAN_PREFIX"
+```
+
+This copies only Yiban's icons into `${XDG_DATA_HOME:-~/.local/share}/icons/hicolor`
+and refreshes the icon cache. Restart Fcitx to refresh its tray item. System
+installations under a desktop-visible `/usr/share/icons` normally do not need
+this extra copy. Repeat the step after changing the logo or moving machines.
+
 To keep the original Rime appearance, configure with `-DYIBAN_BRAND_RIME=OFF` and skip the branding patch. This option does not remove files from a previous installation; restore the original input-method descriptor when reverting branding.
 
 ### Existing project-local development environment

@@ -119,7 +119,7 @@ install(FILES translator/daemon.py
     DESTINATION "${CMAKE_INSTALL_DATADIR}/yiban-ime/translator")
 install(FILES config/bilingualcontext.conf
     DESTINATION "${CMAKE_INSTALL_DATADIR}/yiban-ime/config")
-install(PROGRAMS scripts/install-translator-service.sh
+install(PROGRAMS scripts/install-translator-service.sh scripts/install-user-icons.sh
     DESTINATION "${CMAKE_INSTALL_DATADIR}/yiban-ime/scripts")
 
 install(TARGETS bilingual_dictionary
