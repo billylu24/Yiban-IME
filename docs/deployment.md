@@ -98,6 +98,7 @@ git clone https://github.com/fcitx/fcitx5-rime.git upstream/fcitx5-rime
 git -C upstream/fcitx5-rime checkout 3509646289ec88f5c6c3956b343c305275aa8d3b
 git -C upstream/fcitx5-rime apply "$PWD/patches/fcitx5-rime-word-hints.patch"
 git -C upstream/fcitx5-rime apply "$PWD/patches/fcitx5-rime-yiban-branding.patch"
+git -C upstream/fcitx5-rime apply "$PWD/patches/fcitx5-rime-chinese-only.patch"
 
 cmake -S upstream/fcitx5-rime -B build-rime \
   -DCMAKE_BUILD_TYPE=Release \
@@ -115,7 +116,7 @@ The word-hint patch embeds the dictionary path at build time. Reconfigure and re
 
 `YIBAN_BRAND_RIME=ON` installs the **Yiban** input-method entry and PNG icons from 16px to 512px. The internal ID remains `rime`; no learning-data migration is required.
 
-The branding patch also changes the engine's Chinese-mode icon. Existing Latin/disabled state icons remain available. Desktop panels control final icon rendering; Fcitx Classic UI can prefer images with `PreferTextIcon=False`.
+The branding patch changes the Chinese-mode icon. The chinese-only patch removes Latin Mode and keeps sessions in Chinese; `config/rime/pinyin_simp.custom.yaml` disables the internal Latin mode keys. Desktop panels control final icon rendering; Fcitx Classic UI can prefer images with `PreferTextIcon=False`.
 
 **Private-prefix installations need one additional desktop integration step.**
 The desktop shell does not inherit the Fcitx launcher's `XDG_DATA_DIRS`. Even when
@@ -353,6 +354,12 @@ CMake has no automatic uninstall target. Remove packaged installations through t
 For the legacy main-user test installation, use its paired `scripts/restore-main-user-test.sh`.
 
 ## Testing and troubleshooting
+
+Internal mode regression test (requires a local Rime build with the chinese-only patch):
+
+```sh
+scripts/test-chinese-only.sh .local-env/build/fcitx5-rime/bin
+```
 
 ```sh
 ctest --test-dir build --output-on-failure

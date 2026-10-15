@@ -1,0 +1,64 @@
+diff --git a/src/rimeengine.cpp b/src/rimeengine.cpp
+--- a/src/rimeengine.cpp
++++ b/src/rimeengine.cpp
+@@ -754,17 +754,6 @@
+     RimeSchemaList list;
+     list.size = 0;
+     if (api_->get_schema_list(&list)) {
+-        schemActions_.emplace_back();
+-
+-        schemActions_.back().setShortText(_("Latin Mode"));
+-        schemActions_.back().connect<SimpleAction::Activated>(
+-            [this](InputContext *ic) {
+-                auto *state = this->state(ic);
+-                state->toggleLatinMode();
+-                imAction_->update(ic);
+-            });
+-        instance_->userInterfaceManager().registerAction(&schemActions_.back());
+-        schemaMenu_.insertAction(&separatorAction_, &schemActions_.back());
+         for (size_t i = 0; i < list.size; i++) {
+             schemActions_.emplace_back();
+             std::string schemaId = list.list[i].schema_id;
+diff --git a/src/rimestate.cpp b/src/rimestate.cpp
+--- a/src/rimestate.cpp
++++ b/src/rimestate.cpp
+@@ -63,6 +63,12 @@
+         return 0;
+     }
+ 
++    // Yiban is a Chinese input method; discard restored or app-specific
++    // ascii_mode values before exposing or processing the session.
++    if (requestNewSession &&
++        engine_->api()->get_option(session_->id(), RIME_ASCII_MODE)) {
++        engine_->api()->set_option(session_->id(), RIME_ASCII_MODE, false);
++    }
+     return session_->id();
+ }
+ 
+@@ -134,22 +140,14 @@
+     return schema;
+ }
+ 
+-void RimeState::toggleLatinMode() {
++void RimeState::toggleLatinMode() { setLatinMode(false); }
++
++void RimeState::setLatinMode(bool /*latin*/) {
+     auto *api = engine_->api();
+     if (api->is_maintenance_mode()) {
+         return;
+     }
+-
+-    Bool oldValue = api->get_option(session(), RIME_ASCII_MODE);
+-    api->set_option(session(), RIME_ASCII_MODE, !oldValue);
+-}
+-
+-void RimeState::setLatinMode(bool latin) {
+-    auto *api = engine_->api();
+-    if (api->is_maintenance_mode()) {
+-        return;
+-    }
+-    api->set_option(session(), RIME_ASCII_MODE, latin);
++    api->set_option(session(), RIME_ASCII_MODE, false);
+ }
+ 
+ void RimeState::selectSchema(const std::string &schema) {

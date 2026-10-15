@@ -97,6 +97,7 @@ git clone https://github.com/fcitx/fcitx5-rime.git upstream/fcitx5-rime
 git -C upstream/fcitx5-rime checkout 3509646289ec88f5c6c3956b343c305275aa8d3b
 git -C upstream/fcitx5-rime apply "$PWD/patches/fcitx5-rime-word-hints.patch"
 git -C upstream/fcitx5-rime apply "$PWD/patches/fcitx5-rime-yiban-branding.patch"
+git -C upstream/fcitx5-rime apply "$PWD/patches/fcitx5-rime-chinese-only.patch"
 
 cmake -S upstream/fcitx5-rime -B build-rime \
   -DCMAKE_BUILD_TYPE=Release \
@@ -129,7 +130,7 @@ scripts/install-user-icons.sh "$YIBAN_PREFIX"
 
 若只想使用翻译插件并保留原 Rime 外观，构建时传入 `-DYIBAN_BRAND_RIME=OFF`，并跳过 branding patch。恢复已有安装的原名称时，需要重新安装发行版的 Rime 输入法描述文件；仅关闭构建选项不会删除已经安装的文件。
 
-branding patch 同时更新引擎返回的中文模式图标；英文/禁用模式保留原有状态图标。托盘是否显示图片由桌面与主题决定，Fcitx Classic UI 可将 `PreferTextIcon=False` 以优先使用图标。
+branding patch 同时更新引擎返回的中文模式图标。chinese-only patch 移除 Latin Mode 菜单并保持中文状态；配合 `config/rime/pinyin_simp.custom.yaml` 关闭内部西文按键处理。托盘是否显示图片由桌面与主题决定，Fcitx Classic UI 可将 `PreferTextIcon=False` 以优先使用图标。
 
 ### 4. 使用现有开发机的隔离环境
 
@@ -386,6 +387,12 @@ scripts/restore-main-user-test.sh
 ## 测试与排错
 
 ### 自动测试
+
+内部模式回归测试（需要已应用 chinese-only patch 的本地 Rime 构建）：
+
+```sh
+scripts/test-chinese-only.sh .local-env/build/fcitx5-rime/bin
+```
 
 ```sh
 ctest --test-dir build --output-on-failure

@@ -2,3 +2,14 @@ patch:
   # Keep the compact pinyin_simp schema and its user database, but build its
   # Chinese candidates from the actively maintained Rime Ice dictionary.
   translator/dictionary: rime_ice
+  # Yiban always composes Chinese. English input uses the separate keyboard.
+  switches/@0/states: null
+  ascii_composer:
+    good_old_caps_lock: false
+    switch_key:
+      Shift_L: noop
+      Shift_R: noop
+      Caps_Lock: noop
+      Control_L: noop
+      Control_R: noop
+      Eisu_toggle: noop

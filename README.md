@@ -21,6 +21,8 @@ Chinese candidates show local English definitions. Optional sentence translation
 
 The input-method list displays **Yiban**. Its internal ID remains `rime` to preserve existing profiles and learning data. The supplied profile contains only **English (US)** and **Yiban**.
 
+Yiban stays in Simplified Chinese Pinyin and has no internal Latin Mode. Shift and Caps Lock do not switch input modes. Use the separate system keyboard for English.
+
 ## Install
 
 Requires Linux, a C++20 compiler, CMake ≥ 3.20, Python ≥ 3.10, Fcitx5 Core/Config ≥ 5.1.22 development files, and nlohmann-json ≥ 3.11.

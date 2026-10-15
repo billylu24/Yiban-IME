@@ -21,6 +21,8 @@
 
 输入法列表显示为 **Yiban**，内部保留 `rime` 标识，兼容原有配置与学习数据。项目提供的输入法列表仅包含 **英文键盘（美国）** 和 **Yiban 中文输入法**。
 
+Yiban 固定使用简化字拼音，不提供内部 Latin Mode；Shift、Caps Lock 不再切换中西文。需要英文时，使用系统独立的英文键盘。
+
 ## 安装
 
 需要 Linux、支持 C++20 的编译器、CMake ≥ 3.20、Python ≥ 3.10、Fcitx5 Core/Config ≥ 5.1.22 开发包，以及 nlohmann-json ≥ 3.11。
